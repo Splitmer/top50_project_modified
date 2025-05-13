@@ -1,14 +1,58 @@
-div class="page-header"
+//8 BEGIN: my code (Скачивание архивов, HTML.SLIM)
+div.page-header
   h3 = t(".title", default: "Архив рейтингов")
 
-div class="panel panel-default"
-    div class="panel-body"
-      table class="table table-hover"
-        - @top50_slists.each do |top50_list|
-          tr
-            td class="col-xs-10"
-              - date_attr = @date_vals.find_by(obj_id: top50_list.id)
-              - ldate = date_attr.value
-              - year = ldate.split(".")[2]
-              - month = ldate.split(".")[1]
-              = link_to "Редакция №#{top50_list.num} списка Top50 от #{ldate}", get_archive_path(year, month)
+ruby:
+  field_options = [
+    ['Все поля', 'all'],
+    ['ID', 'id'],
+    ['Name', 'name'],
+    ['Rank', 'rank'],
+    ['Previous Rank', 'previous_rank'],
+    ['Organization', 'organization'],
+    ['CPU Count', 'cpu_count'],
+    ['GPU Count', 'gpu_count'],
+    ['Rmax', 'rmax'],
+    ['Rpeak', 'rpeak'],
+    ['Operating System', 'operating_system'],
+    ['Application Area', 'application_area']
+  ]
+
+div.panel.panel-default
+  div.panel-body
+    = form_tag download_filtered_archive_path, method: :get, class: 'form-inline', style: 'margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-start;'
+
+      .form-group
+        label for="from" Редакция с:
+        = select_tag :from, options_from_collection_for_select(@top50_slists, :id, :num), class: 'form-control input-sm'
+
+      .form-group
+        label for="to" по:
+        = select_tag :to, options_from_collection_for_select(@top50_slists, :id, :num), class: 'form-control input-sm'
+
+      .form-group
+        label for="fields" Поля:
+        = select_tag :fields,
+            options_for_select(field_options),
+            multiple: true,
+            class: 'form-control',
+            size: 10,
+            style: 'width: 400px; min-height: 220px;'
+
+      = submit_tag 'Выгрузить CSV', class: 'btn btn-primary btn-sm', style: 'margin-top: 25px; height: 36px;'
+
+    / === СТАРАЯ ТАБЛИЦА РЕДАКЦИЙ ===
+    table.table.table-hover
+      - @top50_slists.each do |top50_list|
+        tr
+          td.col-xs-8
+            - date_attr = @date_vals.find_by(obj_id: top50_list.id)
+            - ldate = date_attr.value
+            - year = ldate.split(".")[2]
+            - month = ldate.split(".")[1]
+            = link_to "Редакция №#{top50_list.num} списка Top50 от #{ldate}", get_archive_path(year, month)
+          td.col-xs-4.text-right
+            = link_to "Скачать CSV",
+                      download_archive_path(year: year, month: month),
+                      class: "btn btn-primary btn-sm"
+//8 END: my code

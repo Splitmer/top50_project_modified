@@ -1,0 +1,109 @@
+.
+├── app
+│   ├── assets
+│   ├── controllers
+│   ├── decorators
+│   ├── helpers
+│   ├── mailers
+│   ├── models
+│   └── views
+├── bin
+│   ├── autospec
+│   ├── bundle
+│   ├── docker_run
+│   ├── rails
+│   ├── rake
+│   └── rspec
+├── config
+│   ├── abilities.yml
+│   ├── application.rb
+│   ├── boot.rb
+│   ├── database.travis.yml
+│   ├── database.yml
+│   ├── database.yml.example
+│   ├── deploy.rb
+│   ├── environment.rb
+│   ├── environments
+│   ├── groups.default.yml
+│   ├── initializers
+│   ├── locales
+│   ├── puma.rb
+│   ├── routes.rb
+│   ├── schedule.rb
+│   └── secrets.yml
+├── config.ru
+├── db
+│   ├── migrate
+│   ├── schema.rb
+│   ├── seeds.rb
+│   └── wiki_seeds
+├── docker
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   ├── entrypoints
+│   ├── init.sql
+│   ├── kill.sh
+│   └── top50_sec.tar
+├── Dockerfile
+├── dump.rdb
+├── engines
+│   ├── announcements
+│   ├── authentication
+│   ├── core
+│   ├── face
+│   ├── sessions
+│   ├── statistics
+│   ├── support
+│   └── wiki
+├── erd1.pdf
+├── erd2.pdf
+├── erd.pdf
+├── Gemfile
+├── Gemfile.lock
+├── lib
+│   ├── admin_constraint.rb
+│   ├── assets
+│   └── tasks
+├── log
+│   └── development.log
+├── node_modules
+├── Procfile
+├── project_structure.txt
+├── public
+│   ├── 3d_surface_plot_rmax_all.html
+│   ├── 404.html
+│   ├── 422.html
+│   ├── 500.html
+│   ├── 502.html
+│   ├── about
+│   ├── assets
+│   ├── cert_create
+│   ├── favicon.ico
+│   ├── graphs
+│   ├── javascripts
+│   └── robots.txt
+├── Rakefile
+├── README.md
+├── shared
+│   └── top52
+├── spec
+│   ├── factories
+│   ├── features
+│   ├── spec_helper.rb
+│   └── support
+├── test
+│   ├── controllers
+│   ├── fixtures
+│   ├── helpers
+│   ├── mailers
+│   └── models
+├── test.txt
+├── tmp
+│   ├── cache
+│   ├── pids
+│   ├── sessions
+│   └── sockets
+└── vendor
+    └── assets
+
+57 directories, 50 files

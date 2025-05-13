@@ -118,6 +118,749 @@ br
         draw_type(data, "chart_1", "Количество гибридных систем (по числу типов узлов) в редакциях Top50", "Дата (MM.YY)", "Количество систем", COLORS)
       br
 
+// 6 BEGIN: my code (Реализация методов представления HTML.SLIM)
+- elsif @stat_section == "performance_3d"
+  .container-fluid
+    #plotly-3d style="height: 700px; width: 900px; margin-bottom: 40px;"
+
+    javascript:
+      document.addEventListener("DOMContentLoaded", function () {
+        var z = #{raw @z_data.to_json};
+        var editions = #{raw @edition_labels.to_json};  // Y: даты
+        var ranks = Array.from({length: 50}, (_, i) => i + 1);  // X: ранги
+        var machines = #{raw @machine_names.to_json};  // подписи
+
+        // Вычисление масштаба
+        var flatZ = z.flat().filter(v => v > 0);
+        var zMin = Math.min(...flatZ);
+        var zMax = Math.max(...flatZ);
+        var logZMin = Math.log10(zMin);
+        var logZMax = Math.log10(zMax);
+        var tickVals = Array.from({length: 8}, (_, i) => logZMin + i * (logZMax - logZMin) / 7);
+        var tickText = tickVals.map(v => (Math.pow(10, v)).toExponential(1));
+
+        var data = [{
+          z: z,
+          x: ranks,
+          y: editions,
+          text: machines,
+          type: 'surface',
+          colorscale: 'Viridis',
+          cmin: logZMin,
+          cmax: logZMax,
+          colorbar: {
+            title: {
+              text: 'Производительность Rmax (ТФлопс)',
+              side: 'right',
+              font: {
+                size: 18
+              }
+            },
+            tickvals: tickVals,
+            ticktext: tickText,
+            tickfont: {
+              size: 16
+            },
+            len: 0.9,
+            thickness: 15
+          },
+          hovertemplate:
+            "<b>Система</b>: %{text}<br>" +
+            "<b>Rmax</b>: %{z:.2f} ТФлопс<br>" +
+            "<b>Позиция</b>: %{x}<br>" +
+            "<b>Редакция</b>: %{y}<extra></extra>"
+        }];
+
+        var layout = {
+          scene: {
+            xaxis: {
+              title: {
+                text: 'Позиция',
+                font: { size: 20 }
+              },
+              tickmode: 'linear',
+              dtick: 10
+            },
+            yaxis: {
+              title: {
+                text: 'Дата редакции',
+                font: { size: 18 },
+              },
+              tickmode: 'array',
+              tickvals: editions.filter((_, i) => i % 4 === 0),
+              ticktext: editions.filter((_, i) => i % 4 === 0).map(date => {
+                const parts = date.split('.');  // ['день', 'месяц', 'год']
+                return `${parts[1]}.${parts[2]}`;  // 'мм.гггг'
+              }),
+              tickangle: -60,
+              automargin: true
+            },
+
+            zaxis: {
+              title: {
+                text: 'Rmax (ТФлопс)',
+                font: { size: 20 }
+              },
+              type: 'log',
+              autorange: true
+            },
+            camera: {
+              eye: {
+                x: 2.00,
+                y: 1.25,
+                z: 0.5
+              }
+            }
+          },
+     
+          margin: {
+            l: 0, r: 0, b: 0, t: 0
+          }
+        };
+
+        Plotly.newPlot('plotly-3d', data, layout, { displayModeBar: false});
+      });
+
+- elsif @stat_section == "cpu_vendor_3d"
+  div#plotly-3d-vendor style="height: 700px; width: 900px; margin-bottom: 40px;"
+
+  javascript:
+    document.addEventListener("DOMContentLoaded", function () {
+      var z = #{raw @z_data.to_json};
+      var vendorSurface = #{raw @vendor_data.to_json};
+      var machines = #{raw @machine_names.to_json};
+      var machineIds = #{raw @machine_ids.to_json};
+      var editions = #{raw @edition_labels.to_json};
+      var vendorMap = #{raw @vendor_labels.to_json};
+
+      var ranks = Array.from({ length: 50 }, (_, i) => i + 1);
+      var x = ranks;
+      var y = editions;
+
+      var vendorColorMap = {
+        "AMD": "#e41a1c",
+        "Intel": "#377eb8",
+        "Hybrid": "#4daf4a",
+        "Unknown": "#984ea3",
+        "IBM": "#ff7f00",
+        "HP": "#a65628"
+      };
+
+      var surface = {
+        z: z,
+        x: x,
+        y: y,
+        type: 'surface',
+        colorscale: [[0, 'lightgray'], [1, 'lightgray']],
+        opacity: 0.5,
+        showscale: false,
+        hoverinfo: 'skip' // отключаем hover на поверхности
+      };
+
+      var data = [surface];
+
+      var vendorPoints = {}; // vendorName => { x:[], y:[], z:[], text:[], ids:[] }
+
+      for (let i = 0; i < vendorSurface.length; i++) {
+        for (let j = 0; j < vendorSurface[i].length; j++) {
+          let vendorId = vendorSurface[i][j];
+          let vendorName = vendorMap[vendorId] || "Unknown";
+          if (!vendorPoints[vendorName]) {
+            vendorPoints[vendorName] = { x: [], y: [], z: [], text: [], ids: [] };
+          }
+          vendorPoints[vendorName].x.push(x[j]);
+          vendorPoints[vendorName].y.push(y[i]);
+          vendorPoints[vendorName].z.push(z[i][j]);
+          vendorPoints[vendorName].text.push(machines[i][j]);
+          vendorPoints[vendorName].ids.push(machineIds[i][j]);
+        }
+      }
+
+      Object.entries(vendorPoints).forEach(([vendorName, coords]) => {
+        let color = vendorColorMap[vendorName] || "#999999";
+        data.push({
+          x: coords.x,
+          y: coords.y,
+          z: coords.z,
+          text: coords.text,
+          customdata: coords.ids,
+          type: 'scatter3d',
+          mode: 'markers',
+          marker: {
+            color: color,
+            size: 6,
+            opacity: 0.95,
+            symbol: 'circle',
+            line: { width: 1, color: '#000000' }
+          },
+          name: vendorName,
+          legendgroup: vendorName,
+          showlegend: false,
+          hovertemplate:
+            "<b>Система</b>: %{text}<br>" +
+            "<b>Rmax</b>: %{z:.2f} ТФлопс<br>" +
+            "<b>Позиция</b>: %{x}<br>" +
+            "<b>Редакция</b>: %{y}<extra></extra>"
+        });
+      });
+
+      Object.keys(vendorPoints).forEach((vendorName) => {
+        let color = vendorColorMap[vendorName] || "#999999";
+        data.push({
+          x: [null], y: [null], z: [null],
+          type: 'scatter3d',
+          mode: 'markers',
+          marker: {
+            color: color,
+            size: 10,
+            symbol: 'circle',
+            opacity: 1,
+            line: { width: 1, color: '#000000' }
+          },
+          name: vendorName,
+          legendgroup: vendorName,
+          showlegend: true
+        });
+      });
+
+      var layout = {
+        scene: {
+          xaxis: {
+            title: { text: 'Позиция', font: { size: 20 } },
+            tickmode: 'linear',
+            dtick: 10
+          },
+          yaxis: {
+            title: { text: 'Дата редакции', font: { size: 18 }, standoff: 20 },
+            tickmode: 'array',
+            tickvals: y.filter((_, i) => i % 4 === 0),
+            ticktext: editions.filter((_, i) => i % 4 === 0).map(date => {
+              const parts = date.split('.');  // ['день', 'месяц', 'год']
+              return `${parts[1]}.${parts[2]}`;  // 'мм.гггг'
+            }),
+            tickangle: -60,
+            automargin: true
+          },
+          zaxis: {
+            title: { text: 'Rmax (ТФлопс)', font: { size: 20 } },
+            type: 'log',
+            autorange: true
+          },
+          camera: {
+            eye: { x: 1.25, y: 1.25, z: 1.25 }
+          }
+        },
+        margin: { l: 0, r: 0, b: 0, t: 0 },
+        legend: {
+          x: 1,
+          y: 1,
+          traceorder: "normal",
+          font: { size: 14 },
+          bgcolor: 'rgba(255,255,255,0.6)',
+          bordercolor: '#444',
+          borderwidth: 1
+        }
+      };
+
+      Plotly.newPlot('plotly-3d-vendor', data, layout, { displayModeBar: false });
+
+      var plot = document.getElementById('plotly-3d-vendor');
+      plot.on('plotly_click', function(eventData) {
+        var point = eventData.points?.[0];
+        var machineId = point?.customdata;
+        if (machineId) {
+          window.open("/systems/" + machineId, "_blank");
+        }
+      });
+    });
+
+
+- elsif @stat_section == "acc_vendor_3d"
+  div#plotly-3d-acc style="height: 700px; width: 900px; margin-bottom: 40px;"
+
+  javascript:
+    document.addEventListener("DOMContentLoaded", function () {
+      var z = #{raw @z_data.to_json};
+      var vendorSurface = #{raw @vendor_data.to_json};
+      var machines = #{raw @machine_names.to_json};
+      var machineIds = #{raw @machine_ids.to_json};
+      var editions = #{raw @edition_labels.to_json};
+      var vendorMap = #{raw @vendor_labels.to_json};
+
+      var ranks = Array.from({ length: 50 }, (_, i) => i + 1);
+      var x = ranks;
+      var y = editions;
+
+      var vendorColorMap = {
+        "NVIDIA": "#4daf4a",
+        "Intel": "#377eb8",
+        "AMD": "#e41a1c"
+      };
+
+      var surface = {
+        z: z,
+        x: x,
+        y: y,
+        type: 'surface',
+        colorscale: [[0, 'lightgray'], [1, 'lightgray']],
+        opacity: 0.5,
+        showscale: false,
+        hoverinfo: 'skip'
+      };
+
+      var data = [surface];
+      var vendorPoints = {};
+
+      for (let i = 0; i < vendorSurface.length; i++) {
+        for (let j = 0; j < vendorSurface[i].length; j++) {
+          let vendorId = vendorSurface[i][j];
+          let vendorName = vendorMap[vendorId] || "Unknown";
+          if (!(vendorName in vendorColorMap)) continue;
+
+          if (!vendorPoints[vendorName]) {
+            vendorPoints[vendorName] = { x: [], y: [], z: [], text: [], ids: [] };
+          }
+
+          vendorPoints[vendorName].x.push(x[j]);
+          vendorPoints[vendorName].y.push(y[i]);
+          vendorPoints[vendorName].z.push(z[i][j]);
+          vendorPoints[vendorName].text.push(machines[i][j]);
+          vendorPoints[vendorName].ids.push(machineIds[i][j]);
+        }
+      }
+
+      Object.entries(vendorPoints).forEach(([vendorName, coords]) => {
+        let color = vendorColorMap[vendorName] || "#999999";
+        data.push({
+          x: coords.x,
+          y: coords.y,
+          z: coords.z,
+          text: coords.text,
+          customdata: coords.ids,
+          type: 'scatter3d',
+          mode: 'markers',
+          marker: {
+            color: color,
+            size: 6,
+            opacity: 0.95,
+            symbol: 'circle',
+            line: { width: 1, color: '#000000' }
+          },
+          name: vendorName,
+          legendgroup: vendorName,
+          showlegend: false,
+          hovertemplate:
+            "<b>Система</b>: %{text}<br>" +
+            "<b>Rmax</b>: %{z:.2f} ТФлопс<br>" +
+            "<b>Позиция</b>: %{x}<br>" +
+            "<b>Редакция</b>: %{y}<extra></extra>"
+        });
+      });
+
+      Object.keys(vendorPoints).forEach((vendorName) => {
+        let color = vendorColorMap[vendorName] || "#999999";
+        data.push({
+          x: [null], y: [null], z: [null],
+          type: 'scatter3d',
+          mode: 'markers',
+          marker: {
+            color: color,
+            size: 10,
+            symbol: 'circle',
+            opacity: 1,
+            line: { width: 1, color: '#000000' }
+          },
+          name: vendorName,
+          legendgroup: vendorName,
+          showlegend: true
+        });
+      });
+
+      var layout = {
+        scene: {
+          xaxis: {
+            title: { text: 'Позиция', font: { size: 20 } },
+            tickmode: 'linear',
+            dtick: 5
+          },
+          yaxis: {
+            title: { text: 'Дата редакции', font: { size: 18 }, standoff: 20 },
+            tickmode: 'array',
+            tickvals: y.filter((_, i) => i % 4 === 0),
+            ticktext: editions.filter((_, i) => i % 4 === 0).map(date => {
+              const parts = date.split('.');  // ['день', 'месяц', 'год']
+              return `${parts[1]}.${parts[2]}`;  // 'мм.гггг'
+            }),
+            tickangle: -60,
+            automargin: true
+          },
+          zaxis: {
+            title: { text: 'Rmax (TФлопс)', font: { size: 20 } },
+            type: 'log',
+            autorange: true
+          },
+          camera: {
+            eye: { x: 1.25, y: 1.25, z: 1.25 }
+          }
+        },
+        margin: { l: 0, r: 0, b: 0, t: 0 },
+        legend: {
+          x: 1,
+          y: 1,
+          traceorder: "normal",
+          font: { size: 14 },
+          bgcolor: 'rgba(255,255,255,0.6)',
+          bordercolor: '#444',
+          borderwidth: 1
+        }
+      };
+
+      Plotly.newPlot('plotly-3d-acc', data, layout, { displayModeBar: false });
+
+      // Переход на страницу системы
+      var plot = document.getElementById('plotly-3d-acc');
+      plot.on('plotly_click', function(eventData) {
+        var point = eventData.points?.[0];
+        var machineId = point?.customdata;
+        if (machineId) {
+          window.open("/systems/" + machineId, "_blank");
+        }
+      });
+    });
+    
+- elsif @stat_section == 'heatmap_streaks'
+  .container-fluid
+
+    #heatmap-streaks-chart(style="height: 800px; width: 100%;")
+
+    javascript:
+      document.addEventListener("DOMContentLoaded", function () {
+        var z = #{raw @z_data.to_json};
+        var xLabels = #{raw @x_labels.to_json};
+        var yLabels = #{raw @y_labels.to_json};
+
+        var flippedZ = z[0].map((_, colIndex) => z.map(row => row[colIndex]));
+
+        var data = [{
+          z: flippedZ,
+          x: xLabels,
+          y: yLabels.map(String),
+          type: 'heatmap',
+          colorscale: [
+            [0.0, 'rgb(211,211,211)'],
+            [0.01, 'rgb(0,255,255)'],
+            [0.2, 'rgb(0,255,0)'],
+            [0.4, 'rgb(255,255,0)'],
+            [0.6, 'rgb(255,165,0)'],
+            [0.8, 'rgb(255,0,0)'],
+            [1.0, 'rgb(139,0,0)']
+          ],
+          colorbar: {
+            title: {
+              text: 'Количество систем',
+              side: 'right',
+              font: {
+                size: 20
+              }
+            },
+            tickfont: {
+              size: 18
+            }
+          },
+          hovertemplate:
+            'Дата редакции: %{x}<br>' +
+            'Лет в рейтинге: %{y}<br>' +
+            'Систем: %{z}<extra></extra>'
+        }];
+
+        var layout = {
+          width: 1000,
+          xaxis: {
+            title: {
+              text: 'Дата редакции',
+              font: { size: 18 }
+            },
+            tickangle: -45,
+            tickfont: {
+              size: 16
+            },
+            type: 'category'
+          },
+          yaxis: {
+            title: {
+              text: 'Лет в рейтинге',
+              font: { size: 18 }
+            },
+            tickfont: {
+              size: 16
+            },
+            tickmode: 'linear',
+            dtick: 1,
+            type: 'category'
+          },
+          margin: {
+            l: 50,
+            r: 0,
+            b: 140,
+            t: 0
+          }
+        };
+
+        Plotly.newPlot('heatmap-streaks-chart', data, layout, { displayModeBar: false });
+      });
+
+- elsif @stat_section == 'heatmap_rank_vs_years'
+  .container-fluid
+    #heatmap-rank-years-chart style="height: 800px; width: 100%;"
+    div#rank-years-details style="margin-top: 40px;"
+
+    javascript:
+      document.addEventListener("DOMContentLoaded", function () {
+        var z = #{raw @z_data.to_json};
+        var xLabels = #{raw @x_labels.to_json};
+        var yLabels = #{raw @y_labels.to_json};
+        var seriesByCell = #{raw @series_by_cell_js.to_json};
+
+        var data = [{
+          z: z,
+          x: xLabels,
+          y: yLabels.map(String),
+          type: 'heatmap',
+          colorscale: [
+            [0.0, 'rgb(211,211,211)'],
+            [0.01, 'rgb(0,255,255)'],
+            [0.2, 'rgb(0,255,0)'],
+            [0.4, 'rgb(255,255,0)'],
+            [0.6, 'rgb(255,165,0)'],
+            [0.8, 'rgb(255,0,0)'],
+            [1.0, 'rgb(139,0,0)']
+          ],
+          colorbar: {
+            title: {
+              text: 'Количество систем',
+              side: 'right',
+              font: { size: 20 }
+            },
+            tickfont: { size: 18 }
+          },
+          hovertemplate:
+            'Начальный ранг: %{x}<br>' +
+            'Лет в рейтинге: %{y}<br>' +
+            'Систем: %{z}<extra></extra>'
+        }];
+
+        var layout = {
+          
+          xaxis: {
+            title: { text: 'Начальная позиция', font: { size: 18 } },
+            tickangle: -45,
+            tickfont: { size: 14 },
+            tickmode: 'linear',
+            dtick: 1,
+            type: 'category'
+          },
+          yaxis: {
+            title: { text: 'Лет в рейтинге', font: { size: 18 } },
+            tickfont: { size: 16 },
+            tickmode: 'linear',
+            dtick: 1,
+            type: 'category'
+          },
+          width: 1000,
+          margin: { l: 50, b: 120, r: 0, t: 0 }
+        };
+
+        Plotly.newPlot('heatmap-rank-years-chart', data, layout, { displayModeBar: false });
+
+        document.getElementById('heatmap-rank-years-chart').on('plotly_click', function(eventData) {
+          var rank = eventData.points[0].x;
+          var years = eventData.points[0].y;
+          var key = rank + "-" + years;
+          var series = seriesByCell[key];
+
+          var container = document.getElementById('rank-years-details');
+          if (!series || series.length === 0) {
+            container.innerHTML = `<p>Нет систем с начальной позицией <b>${rank}</b> и сроком пребывания <b>${years}</b> лет.</p>`;
+            return;
+          }
+
+          function pluralizeYears(n) {
+            if (n % 10 === 1 && n % 100 !== 11) return 'год';
+            if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'года';
+            return 'лет';
+          }
+
+          var yearsWord = pluralizeYears(years);
+          var html = `<h4>Системы с начальной позицией <b>${rank}</b> и сроком пребывания <b>${years}</b> ${yearsWord}:</h4>`;
+          html += `<table class="table table-bordered table-sm">
+            <thead>
+              <tr>
+                <th>Система</th>
+                <th>Первая редакция</th>
+                <th>Последняя редакция</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+          series.forEach(function(sys) {
+            var name = sys.name || 'н/д';
+            var url = sys.machine_id ? `/systems/${sys.machine_id}` : '#';
+            html += `<tr>
+              <td><a href="${url}" target="_blank">${name}</a></td>
+              <td>${sys.start}</td>
+              <td>${sys.end}</td>
+            </tr>`;
+          });
+
+          html += "</tbody></table>";
+          container.innerHTML = html;
+        });
+
+      });
+
+
+- elsif @stat_section == "performance_3d_with_machine_status"
+  .container-fluid
+    #plotly-3d style="height: 700px; width: 900px; margin-bottom: 40px;"
+
+    javascript:
+      document.addEventListener("DOMContentLoaded", function () {
+        var z = #{raw @z_data.to_json};
+        var editions = #{raw @edition_labels.to_json};
+        var machines = #{raw @machine_names.to_json};
+        var statuses = #{raw @machine_status.to_json};
+        var machineIds = #{raw @machine_ids.to_json};
+        var ranks = Array.from({length: 50}, (_, i) => i + 1);
+
+        var surface = {
+          z: z,
+          x: ranks,
+          y: editions,
+          type: 'surface',
+          colorscale: [[0, 'lightgray'], [1, 'lightgray']],
+          opacity: 0.5,
+          showscale: false,
+          hoverinfo: 'skip'
+        };
+
+        var scatterTraces = {
+          new:     { x: [], y: [], z: [], text: [], ids: [], color: 'green',  name: 'Новые' },
+          upgrade: { x: [], y: [], z: [], text: [], ids: [], color: 'orange', name: 'Обновленные' }
+        };
+
+        for (let i = 0; i < z.length; i++) {
+          for (let j = 0; j < z[i].length; j++) {
+            let status = (statuses[i][j] || "existing").toLowerCase();
+            if (machines[i][j] !== "н/д" && scatterTraces[status]) {
+              let trace = scatterTraces[status];
+              trace.x.push(ranks[j]);
+              trace.y.push(editions[i]);
+              trace.z.push(z[i][j]);
+              trace.text.push(machines[i][j]);
+              trace.ids.push(machineIds[i][j]);
+            }
+          }
+        }
+
+        var data = [surface];
+
+        Object.entries(scatterTraces).forEach(([_, trace]) => {
+          data.push({
+            x: trace.x,
+            y: trace.y,
+            z: trace.z,
+            text: trace.text,
+            customdata: trace.ids,
+            mode: 'markers',
+            type: 'scatter3d',
+            name: trace.name,
+            legendgroup: trace.name,
+            showlegend: false,
+            marker: {
+              size: 6,
+              color: trace.color,
+              opacity: 0.95,
+              symbol: 'circle',
+              line: { width: 1, color: '#000' }
+            },
+            hovertemplate:
+              "<b>Система</b>: %{text}<br>" +
+              "<b>Rmax</b>: %{z:.2f} TФлопс<br>" +
+              "<b>Позиция</b>: %{x}<br>" +
+              "<b>Редакция</b>: %{y}<extra></extra>"
+          });
+        });
+
+        Object.entries(scatterTraces).forEach(([_, trace]) => {
+          data.push({
+            x: [null], y: [null], z: [null],
+            type: 'scatter3d',
+            mode: 'markers',
+            marker: {
+              color: trace.color,
+              size: 10,
+              symbol: 'circle',
+              opacity: 1,
+              line: { width: 1, color: '#000000' }
+            },
+            name: trace.name,
+            legendgroup: trace.name,
+            showlegend: true
+          });
+        });
+
+        var layout = {
+          scene: {
+            xaxis: {
+              title: { text: 'Позиция', font: { size: 20 } },
+              tickmode: 'linear',
+              dtick: 10
+            },
+            yaxis: {
+              title: { text: 'Дата редакции', font: { size: 18 }, standoff: 20 },
+              tickmode: 'array',
+              tickvals: editions.filter((_, i) => i % 4 === 0),
+              ticktext: editions.filter((_, i) => i % 4 === 0).map(date => {
+                const parts = date.split('.');  // ['день', 'месяц', 'год']
+                return `${parts[1]}.${parts[2]}`;  // 'мм.гггг'
+              }),
+              tickangle: -60,
+              automargin: true
+            },
+            zaxis: {
+              title: { text: 'Rmax (ТФлопс)', font: { size: 20 } },
+              type: 'log',
+              autorange: true
+            },
+            camera: { eye: { x: 1.25, y: 1.25, z: 1.25 } },
+            hovermode: 'closest',  
+            hoverdistance: 20
+          },
+          margin: { l: 0, r: 0, b: 0, t: 0 },
+          legend: {
+            x: 0.85,
+            y: 0.95,
+            traceorder: "normal",
+            font: { size: 14 },
+            bgcolor: 'rgba(255,255,255,0.6)',
+            bordercolor: '#444',
+            borderwidth: 1
+          }
+        };
+
+        Plotly.newPlot('plotly-3d', data, layout, { displayModeBar: false });
+
+        var plot = document.getElementById('plotly-3d');
+        plot.on('plotly_click', function(eventData) {
+          var point = eventData.points?.[0];
+          var machineId = point?.customdata;
+          if (machineId) {
+            window.open("/systems/" + machineId, "_blank");
+          }
+        });
+      });
+// 6 END: my code
+
 - elsif @stat_section == "cpu_vendor"
   - hlist_chart_data = {}
   - hlist_dates = {}

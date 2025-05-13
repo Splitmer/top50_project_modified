@@ -7,6 +7,7 @@
    криптография и биоинженерия - это лишь небольшой список областей,
    где для успешного продвижения вперед требуются компьютеры с действительно
    запредельной производительностью. </p>
+   <p align="justify" style="color: red;">Я пытаюсь разобраться, но тщетно</p>
 <p align="justify">Чтобы помочь правильно сориентироваться в мире высокопроизводительных вычислительных систем и
     иметь возможность оперативно отслеживать тенденции развития данной области,
     <a href="http://srcc.msu.ru" target=new>Научно-исследовательский вычислительный центр МГУ имени
@@ -23,3 +24,17 @@
 <br>
 <p align="left"><a href="about/top50_rules.pdf">Положение о рейтинге Топ50</a></p>
 <p align="left"><a href="about/top50_letter.docx">Письмо о включении СК в рейтинг</a></p>
+
+<button onclick="toggleGraph()">Показать/Скрыть данные производительности в 3D</button>
+<iframe id="graphFrame" src="/3d_surface_plot_rmax_all.html" width="100%" height="600px" style="display: none; border: none;"></iframe>
+
+<script>
+  function toggleGraph() {
+    var frame = document.getElementById('graphFrame');
+    if (frame.style.display === 'none' || frame.style.display === '') {
+      frame.style.display = 'block';
+    } else {
+      frame.style.display = 'none'; 
+    }
+  }
+</script>

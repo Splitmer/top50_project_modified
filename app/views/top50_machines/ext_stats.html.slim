@@ -17,3 +17,9 @@ br
   = pie_chart c_chart_data, :title => "Распределение систем по типу в #{list_num.value}-ой редакции от #{date_val.value}"
   br
   = link_to "Назад", top50_stats_path('type'), class: "btn btn-default"
+
+<button onclick="document.getElementById('graphFrame').style.display = 'block'">
+  Отобразить данные производительности в 3D
+</button> 
+
+<iframe id="graphFrame" src="/3d_surface_plot_rmax_all.html" width="100%" height="600px" style="display: none; border: none;"></iframe>
