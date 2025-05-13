@@ -1333,7 +1333,7 @@ class Top50MachinesController < Top50BaseController
                     .where("top50_benchmark_results.machine_id IN (#{tree_prec_sql(@top50_machine.id)})")
                     .order("cast(encode(top50_attribute_val_dbvals.value, 'escape') as int)")
   
-    #3 BEGIN: my code (Линия жизни на поверхности в разделе расширенной статистики)
+    #5 BEGIN: my code (Линия жизни на поверхности в разделе расширенной статистики)
     list_date_attr_id = Top50Attribute.find_by(name_eng: "Edition date").id
     date_vals_map = Top50AttributeValDbval.where(attr_id: list_date_attr_id, obj_id: @top50_slists.map(&:id)).index_by(&:obj_id)
   
@@ -1420,7 +1420,7 @@ class Top50MachinesController < Top50BaseController
     @machine_ids    = @machine_ids.transpose
     @machine_status = @machine_status.transpose
   end
-  #3 END: my code
+  #5 END: my code
 
   def stats_common
 
@@ -1528,7 +1528,7 @@ class Top50MachinesController < Top50BaseController
         debug_attributes_for(child, level + 1)
       end
   end
-  #[4] END: my code
+  #4 END: my code
 
   def stats(ext = 0)
     @stat_section = params[:section]
@@ -1671,7 +1671,7 @@ class Top50MachinesController < Top50BaseController
           @top50_cats << _top50_cat.new(cpu_fam.fam_id, cpu_fam.fam_name)
         end
       end
-   #5 BEGIN: my code (Реализация методов представления, контроллер)
+   #3 BEGIN: my code (Реализация методов представления, контроллер)
     elsif @stat_section == 'performance_3d'
     
       # relation = Top50Relation.joins(:top50_relation_type)
@@ -2298,7 +2298,7 @@ class Top50MachinesController < Top50BaseController
       # else
       #   puts "DEBUG: @debug_machine is still nil!"
       # end
-    #5 END: my code
+    #3 END: my code
 
     elsif @stat_section.present? and @stat_section[0..6] == 'vendors'
       @vendors_headers = {}

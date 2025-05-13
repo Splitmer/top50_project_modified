@@ -118,7 +118,7 @@ br
         draw_type(data, "chart_1", "Количество гибридных систем (по числу типов узлов) в редакциях Top50", "Дата (MM.YY)", "Количество систем", COLORS)
       br
 
-// 6 BEGIN: my code (Реализация методов представления HTML.SLIM)
+//3 BEGIN: my code (Реализация методов представления HTML.SLIM)
 - elsif @stat_section == "performance_3d"
   .container-fluid
     #plotly-3d style="height: 700px; width: 900px; margin-bottom: 40px;"
@@ -859,7 +859,7 @@ br
           }
         });
       });
-// 6 END: my code
+//3 END: my code
 
 - elsif @stat_section == "cpu_vendor"
   - hlist_chart_data = {}
