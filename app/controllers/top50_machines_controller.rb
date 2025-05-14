@@ -1718,6 +1718,15 @@ class Top50MachinesController < Top50BaseController
       end
     
       @z_data = @z_data.transpose
+      # puts "==============================================="
+      # puts "==============================================="
+      # puts "==============================================="
+      # puts "Z structure: #{@z_data.size} x #{@z_data.first.size}"
+      # puts "Names structure: #{@machine_names.size} x #{@machine_names.first.size}"
+      # puts "==============================================="
+      # puts "==============================================="
+      # puts "==============================================="
+
     
 #       Rails.logger.info("===== Полный z_data (первые 10 строк) =====")
 # @z_data.each_with_index do |row, i|
