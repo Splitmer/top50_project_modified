@@ -1,0 +1,18 @@
+//2 BEGIN: my code (Скачивание архивов, HTML.SLIM)
+div.page-header
+  h3 = t(".title", default: "Архив рейтингов")
+
+table.table.table-hover
+      - @top50_slists.each do |top50_list|
+        tr
+          td.col-xs-8
+            - date_attr = @date_vals.find_by(obj_id: top50_list.id)
+            - ldate = date_attr.value
+            - year = ldate.split(".")[2]
+            - month = ldate.split(".")[1]
+            = link_to "Редакция №#{top50_list.num} списка Top50 от #{ldate}", get_archive_path(year, month)
+          td.col-xs-4.text-right
+            = link_to "Скачать CSV",
+                      download_archive_path(year: year, month: month),
+                      class: "btn btn-primary btn-sm"
+//2 END: my code

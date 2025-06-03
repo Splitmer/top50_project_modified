@@ -1,0 +1,80 @@
+doctype html
+html
+  head
+    title Top50 | Суперкомпьютеры
+    = favicon_link_tag 'favicon.ico'
+    = favicon_link_tag 'apple-touch-icon-precomposed.png', type: 'image/png'
+    = favicon_link_tag 'apple-touch-icon-precomposed.png', rel: 'apple-touch-icon', type: 'image/png'
+    link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet"
+    /[ if lt IE 9 ]
+      script src="http://html5shim.googlecode.com/svn/trunk/html5.js" type="text/javascript"
+    script type="text/javascript" src="https://www.google.com/jsapi"
+    = stylesheet_link_tag "application", media: "all"
+    = javascript_include_tag "application"
+    = csrf_meta_tags
+    javascript:
+      window.env = "#{Rails.env}"
+      window.locale = "#{I18n.locale}"
+  body
+    div id="top" align="center"
+      center
+        table width="740" border="0" cellspacing="0" cellpadding="0"
+          td id="logo" 
+            = link_to image_tag("logo.gif", alt: "TOP 50 | Суперкомпьютеры", width: "178", height: "64", border: "0"), "/", title: "Перейти на главную страницу"
+          td align="right"
+            = image_tag "b-540x90-2.gif", alt: "", width: "401", height: "111", border: "0"
+    div class="navbar navbar-default navbar-static-top" role="navigation" 
+      div class="container"
+        div class="navbar-header"
+          a class="navbar-brand" href="/newsfeed" Новости
+        div class="navbar-header"
+          a class="navbar-brand" href="/about" О проекте
+        div class="navbar-collapse collapse"
+          ul class="nav navbar-nav"
+            a class="navbar-brand" href="/list" Текущий рейтинг
+          ul class="nav navbar-nav"
+            a class="navbar-brand" href="/archive" Архив
+          ul class="nav navbar-nav"
+            a class="navbar-brand" href="/stats" Статистика
+          ul class="nav navbar-nav"
+            a class="navbar-brand" href="/application/new" Подать заявку
+          - if current_user && current_user.may_manage_certs?
+            ul class="nav navbar-nav"
+              a class="navbar-brand" href="/certificates/page1" Создать сертификат
+          - if current_user && current_user.may_edit_top50?
+            ul class="nav navbar-nav"
+              = link_to 'Новая редакция', top50_machines_new_list_path, class: "navbar-brand"
+            ul class="nav navbar-nav"
+              = link_to 'Редактирование данных', admin_links_path, class: "navbar-brand"
+          - if current_user
+            ul class="nav navbar-nav"
+              a class="navbar-brand" href="/auth/session" Выйти (#{current_user.email})
+
+    div class="container"
+      table border="0" cellspacing="0" cellpadding="0"
+        tr
+          td id="mainBlock" rowspan="2"
+            = render "face/shared/flashes"
+            = content
+          td id="rightBlock" align="center"
+            = link_to image_tag("parallel141x114blue.gif", :alt=>"Информационно-аналитический центр по параллельным вычислениям", :width=>"141", :height=>"111", :border=>"0", :style=>"margin: 0"), 'https://www.parallel.ru', target: :_blank, title: "Информационно-аналитический центр по параллельным вычислениям"
+
+            br
+            br
+            br
+            = "Организаторы рейтинга:"
+            br
+            = link_to image_tag("logo-srcc.gif", alt: "Научно-исследовательский вычислительный центр МГУ", :width=>"60", :height=>"60", :border=>"0", :style=>"margin: 0"), 'https://rcc.msu.ru', target: :_blank, title: "Научно-исследовательский вычислительный центр МГУ"
+            br
+            = link_to image_tag("logo-jscc.gif", alt: "Межведомственный Суперкомпьютерный Центр РАН", :width=>"60", :height=>"60", :border=>"0", :style=>"margin: 0"), "http://www.jscc.ru", target: :_blank, title: "Межведомственный Суперкомпьютерный Центр РАН"
+            br
+            br
+            br
+            = link_to image_tag("rffi1.gif", alt: "Работа выполнена при поддержке РФФИ", :width=>"141", :height=>"111", :border=>"0", :style=>"margin: 0"), "http://www.rfbr.ru", target: :_blank, title: "Работа выполнена при поддержке РФФИ"
+        
+      div id="footer"
+        = link_to 'НИВЦ МГУ имени М.В. Ломоносова', 'http://srcc.msu.ru', target: '_blank'
+        br
+        br
+        = link_to 'Вход для администратора', '/auth/session/new'
+
